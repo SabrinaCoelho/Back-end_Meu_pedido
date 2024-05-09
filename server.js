@@ -71,9 +71,6 @@ fastify.get('/usuarios', async (request, reply) => {
 })
 //GETALL RESTAURANTE
 fastify.get('/restaurantes', async (request, reply) => {
-  console.log("nyoho")
-  console.log(request.params.restId)
-  const restFiltro = request.params.restId;
   const pipeline = [
     { $match: { tipo: "restaurante" } },
     { $project: { email: 1, nome: 1, _id: 0 } },
@@ -86,7 +83,44 @@ fastify.get('/restaurantes', async (request, reply) => {
   }
   return result
 })
-//GETONE
+//GET ALL COMANDAS
+fastify.get('/comandas/:usuarioId', async (request, reply) => {
+  console.log(request.params.id)
+  const usuarioId = request.params.usuarioId;
+  
+  const result = await client.db("Meu_pedido").collection("comanda").findOne({cliente: usuarioId})
+  
+  if (result.length === 0) {
+    throw new Error('No documents found')
+  }
+  return result
+})
+//GET ALL COMANDAS ABERTAS
+fastify.get('/comandasAbertas/:usuarioId', async (request, reply) => {
+  console.log(request.params.id)
+  const usuarioId = request.params.usuarioId;
+  
+  const result = await client.db("Meu_pedido").collection("comanda").find({cliente: usuarioId, status: "aberto"}).toArray()
+  
+  if (result.length === 0) {
+    throw new Error('No documents found')
+  }
+  return result
+})
+
+//GETBYID RESTAURANTE
+fastify.get('/restaurantes/:id', async (request, reply) => {
+  console.log(request.params.id)
+  const restauranteId = request.params.id;
+  
+  const result = await client.db("Meu_pedido").collection("usuarios").findOne({email: restauranteId})
+  
+  if (result.length === 0) {
+    throw new Error('No documents found')
+  }
+  return result
+})
+//GETONE USER
 fastify.get('/usuarios/:id', async (request, reply) => {
   console.log(request.params)
   const id = request.params.id
@@ -115,6 +149,21 @@ fastify.post('/usuarios', async (request, reply) => {
   }
   return result
 })
+//CADASTRO PEDIDOS
+fastify.post('/pedidos', async (request, reply) => {
+  console.log("****************")
+  console.log(request.body.pedidos)
+
+  /* const result = await client.db("Meu_pedido").collection("usuarios").insertOne(
+    request.body.usuario
+  )
+  
+  if (result.length === 0) {
+    throw new Error('No documents found')
+  }
+  return result */
+  return null
+})
 //LOGIN - TO DO schema
 fastify.post('/login', async (request, reply) => {
   console.log("****************")
@@ -133,8 +182,10 @@ fastify.post('/login', async (request, reply) => {
   return result
 })
 //GETALL PRODUTO
-fastify.get('/produtos', async (request, reply) => {
-  const result = await client.db("Meu_pedido").collection("produtos").find().toArray()
+fastify.get('/produtos/:restauranteId', async (request, reply) => {
+  const restauranteId = request.params.restauranteId
+  console.log(typeof(restauranteId))
+  const result = await client.db("Meu_pedido").collection("produtos").find({restauranteId: new ObjectId(restauranteId)}).toArray()
   
   if (result.length === 0) {
     throw new Error('No documents found')
@@ -176,7 +227,7 @@ fastify.get('/comanda/:id', async (request, reply) => {
   const id = request.params.id
   console.log(id)
   const result = await client.db("Meu_pedido").collection("comanda").findOne(
-    {_id: new ObjectId(id)}
+    {_id: ObjectId(id)}
   )
   
   if (result.length === 0) {
